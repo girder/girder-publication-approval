@@ -1,42 +1,18 @@
-function _addCurationButton() {
-    $('.g-folder-actions-menu').append(girder.templates.curation_button());
-}
+import _ from 'underscore';
+import moment from 'moment';
 
-// add curation button to hiearchy widget
-girder.wrap(girder.views.HierarchyWidget, 'render', function (render) {
-    render.call(this);
+import View from 'girder/views/View';
+import { events } from 'girder/events';
+import { getCurrentUser } from 'girder/auth';
+import { restRequest } from 'girder/rest';
 
-    if (this.parentModel.get('_modelType') === 'folder') {
-        // add button if an admin or if curation is enabled
-        if (girder.currentUser.get('admin')) {
-            _addCurationButton();
-        } else {
-            girder.restRequest({
-                path: 'folder/' + this.parentModel.get('_id') + '/curation'
-            }).done(_.bind(function (resp) {
-                if (resp.enabled) {
-                    _addCurationButton();
-                }
-            }, this));
-        }
-    }
+import CurationDialogTemplate from '../templates/curationDialog.jade';
+import '../stylesheets/curationDialog.styl';
 
-    return this;
-});
+import 'bootstrap/js/modal';
+import 'girder/utilities/jQuery'; // $.girderModal
 
-// launch modal when curation button is clicked
-girder.views.HierarchyWidget.prototype.events['click .g-curation-button'] = function (e) {
-    /* eslint-disable no-new */
-    new girder.views.CurationDialog({
-        el: $('#g-dialog-container'),
-        parentView: this,
-        folder: this.parentModel
-    });
-    /* eslint-enable no-new */
-};
-
-// curation dialog
-girder.views.CurationDialog = girder.View.extend({
+var CurationDialog = View.extend({
     events: {
         'click #g-curation-enable': function (event) {
             event.preventDefault();
@@ -85,7 +61,7 @@ girder.views.CurationDialog = girder.View.extend({
     initialize: function (settings) {
         this.folder = this.parentView.parentModel;
         this.curation = {timeline: []};
-        girder.restRequest({
+        restRequest({
             path: 'folder/' + this.folder.get('_id') + '/curation'
         }).done(_.bind(function (resp) {
             this.curation = resp;
@@ -94,10 +70,10 @@ girder.views.CurationDialog = girder.View.extend({
     },
 
     render: function (refresh) {
-        var q = this.$el.html(girder.templates.curation_dialog({
+        var q = this.$el.html(CurationDialogTemplate({
             folder: this.folder,
             curation: this.curation,
-            moment: window.moment
+            moment: moment
         }));
 
         if (!refresh) {
@@ -110,7 +86,7 @@ girder.views.CurationDialog = girder.View.extend({
             if (this.curation.status === 'construction') {
                 $('#g-curation-request').show();
             }
-            if (girder.currentUser.get('admin')) {
+            if (getCurrentUser().get('admin')) {
                 $('#g-curation-disable').show();
                 if (this.curation.status === 'requested') {
                     $('#g-curation-approve').show();
@@ -121,7 +97,7 @@ girder.views.CurationDialog = girder.View.extend({
                 }
             }
         } else {
-            if (girder.currentUser.get('admin')) {
+            if (getCurrentUser().get('admin')) {
                 $('#g-curation-enable').show();
             }
         }
@@ -130,14 +106,14 @@ girder.views.CurationDialog = girder.View.extend({
     },
 
     _save: function (successText, data) {
-        girder.restRequest({
+        restRequest({
             type: 'PUT',
             path: 'folder/' + this.folder.get('_id') + '/curation',
             data: data
         }).done(_.bind(function (resp) {
             this.curation = resp;
             this.render(true);
-            girder.events.trigger('g:alert', {
+            events.trigger('g:alert', {
                 icon: 'ok',
                 text: successText,
                 type: 'success',
@@ -150,3 +126,5 @@ girder.views.CurationDialog = girder.View.extend({
         }, this));
     }
 });
+
+export default CurationDialog;
