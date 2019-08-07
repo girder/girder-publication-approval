@@ -271,7 +271,7 @@ class CuratedFolder(Resource):
             curation=folder[CURATION])
         text = mail_utils.renderTemplate(template, data)
         emails = [self._getEmail(userId)]
-        mail_utils.sendEmail(emails, subject, text)
+        mail_utils.sendMail(subject, text, emails)
 
 
 class CurationPlugin(GirderPlugin):
