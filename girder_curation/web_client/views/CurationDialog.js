@@ -1,15 +1,15 @@
 import $ from 'jquery';
 import moment from 'moment';
 
-import View from 'girder/views/View';
-import events from 'girder/events';
-import { getCurrentUser } from 'girder/auth';
-import { restRequest } from 'girder/rest';
+import View from '@girder/core/views/View';
+import events from '@girder/core/events';
+import { getCurrentUser } from '@girder/core/auth';
+import { restRequest } from '@girder/core/rest';
 
 import CurationDialogTemplate from '../templates/curationDialog.pug';
 import '../stylesheets/curationDialog.styl';
 
-import 'girder/utilities/jquery/girderModal';
+import '@girder/core/utilities/jquery/girderModal';
 
 var CurationDialog = View.extend({
     events: {
